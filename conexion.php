@@ -1,18 +1,15 @@
 <?php
-$host = "localhost";
-$dbname = "mi_sitio";
-$username = "root"; // Usuario por defecto en WAMP
-$password = "";     // Contraseña por defecto en WAMP (vacía)
+// Parámetros ajustados a la red de contenedores de Docker Compose
+$host = "db-mysql"; // <- ¡IMPORTANTE! Nombre del servicio de MySQL en docker-compose.yml
+$dbname = "db_proyecto_mvc";
+$usuario = "root";
+$contrasena = "clave_secreta_nube";
 
 try {
-    // Creamos la conexión usando el objeto PDO
-    $conexion = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-    
-    // Configuramos PDO para que lance excepciones en caso de errores
+    $conexion = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $usuario, $contrasena);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
-    // Si hay un error de conexión, detiene el script y lo muestra
-    die("Error crítico de conexión: " . $e->getMessage());
+    // Se detiene el script: sin conexión, el controlador no puede funcionar
+    die("Error de conexión: " . $e->getMessage());
 }
-
 ?>

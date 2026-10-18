@@ -1,6 +1,7 @@
-    </div> <!-- Cierre de #contenedor-principal -->
+    </main> <!-- Cierre de #contenedor-principal -->
     <footer>
-        <p>&copy; <?php echo date("Y"); ?> Mi Empresa - Todos los derechos reservados.</p>
+        <p>&copy; <?php echo date("Y"); ?> Juan Esteban García Morillo · Ingeniería de Sistemas y Telecomunicaciones, UCP</p>
+        <p class="footer-nota">Corriendo en contenedores: PHP 8.2 + Apache, MySQL 8.0</p>
     </footer>
 </body>
 </html>
