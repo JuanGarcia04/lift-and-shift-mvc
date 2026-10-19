@@ -1,58 +1,93 @@
 # Proyecto Web MVC: Lift and Shift con Docker
 
-Laboratorio #4 de Cloud Computing (Universidad Católica de Pereira).
+Aplicación web en PHP con patrón MVC, migrada de un entorno tradicional (WAMP) a contenedores Docker siguiendo la estrategia **Lift and Shift**: la aplicación se traslada a un entorno nuevo con los mínimos cambios en su código.
+
+Laboratorio #4 de Cloud Computing, Universidad Católica de Pereira.
 Autor: **Juan Esteban García Morillo**
 
-Aplicación web tradicional en PHP (patrón MVC, front controller con `.htaccess`) migrada a contenedores con Docker Compose: PHP 8.2 + Apache, MySQL 8.0 y phpMyAdmin.
+## Tecnologías
 
-## Cómo ejecutarlo y dónde tomar las evidencias
+- PHP 8.2 + Apache (con `mod_rewrite` para el front controller del `.htaccess`)
+- MySQL 8.0
+- phpMyAdmin
+- Docker y Docker Compose
 
-Requisito: Docker Desktop abierto y corriendo.
+## Arquitectura
 
-1. **Clonar y entrar al proyecto**
+| Servicio | Imagen | Puerto | Función |
+|---|---|---|---|
+| `web-app` | Construida con el `Dockerfile` | 8080 | La aplicación PHP MVC |
+| `db-mysql` | `mysql:8.0` | 3306 | Base de datos, con el volumen `datos-persistentes` |
+| `phpmyadmin` | `phpmyadmin/phpmyadmin` | 8085 | Administración gráfica de MySQL |
+
+Dentro de la red de Docker Compose los servicios se encuentran por su nombre: la aplicación se conecta a MySQL usando el host `db-mysql`, no `localhost`. Los datos se guardan en un volumen, así que se conservan aunque los contenedores se eliminen.
+
+## Requisitos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y en ejecución.
+- Los puertos 8080, 8085 y 3306 libres. Si tienes WAMP, XAMPP o un MySQL local, ciérralos antes de iniciar.
+
+No se necesita instalar PHP, Apache, MySQL ni XAMPP: todo corre dentro de los contenedores.
+
+## Cómo levantar el proyecto
+
+1. **Clonar el repositorio**
    ```bash
-   git clone <URL-de-este-repositorio>
+   git clone https://github.com/JuanGarcia04/lift-and-shift-mvc.git
    cd lift-and-shift-mvc
    ```
-   📸 **Evidencia A (informe, paso 1):** la terminal con el `git clone` y el árbol del proyecto abierto en VS Code (`controllers/`, `models/`, `views/`, `.htaccess`, `Dockerfile`, `docker-compose.yml`).
 
-2. **Revisar los cambios de configuración**
-   📸 **Evidencia B (paso 2):** `conexion.php` en VS Code mostrando `$host = "db-mysql"`.
-   📸 **Evidencia C (paso 3):** el `Dockerfile`.
-   📸 **Evidencia D (paso 4):** el `docker-compose.yml` con los tres servicios.
-
-3. **Levantar los contenedores**
+2. **Construir e iniciar los contenedores**
    ```bash
    docker compose up --build
    ```
-   La primera vez tarda unos minutos descargando imágenes. Espera hasta ver en el log de MySQL `ready for connections`.
-   📸 **Evidencia E (paso 5):** la terminal con el build terminado y los tres contenedores creados.
-   📸 **Evidencia F:** Docker Desktop (pestaña *Containers*) con `mvc_app_container`, `mvc_mysql_container` y `mvc_phpmyadmin_container` en verde, o el resultado de `docker ps` en otra terminal.
+   La primera vez tarda unos minutos mientras descarga las imágenes. Los servicios están listos cuando en el log de MySQL aparece `ready for connections`.
 
-4. **Crear y modificar la tabla en phpMyAdmin** → http://localhost:8085 (usuario `root`, contraseña `clave_secreta_nube`)
-   - Selecciona la base `db_proyecto_mvc` → pestaña **SQL** → pega y ejecuta el contenido de `sql/contactos.sql` (crea la tabla y luego el `ALTER TABLE` que agrega `correo` y `comentario`).
-   📸 **Evidencia G:** la pestaña SQL con el script y el mensaje verde de éxito.
-   📸 **Evidencia H:** la pestaña **Estructura** de `contactos` donde se vean las columnas `correo VARCHAR(255)` y `comentario TEXT`.
+3. **Crear la tabla de la base de datos** (solo la primera vez)
+   - Entra a phpMyAdmin en http://localhost:8085 (usuario `root`, contraseña `clave_secreta_nube`).
+   - Selecciona la base `db_proyecto_mvc`, abre la pestaña **SQL** y ejecuta el contenido de [`sql/contactos.sql`](sql/contactos.sql).
 
-5. **Probar la aplicación** → http://localhost:8080
-   📸 **Evidencia I (entregable obligatorio):** la sección **Mis gustos personales** (http://localhost:8080/gustos) con la barra de dirección visible, mostrando el diseño y colores nuevos.
-   📸 **Evidencia J (opcional):** la página de inicio con el nuevo estilo.
+4. **Abrir la aplicación** en http://localhost:8080
 
-6. **Enviar el formulario de contacto** → http://localhost:8080/contacto
-   Llena nombre, correo y comentario con datos reales tuyos.
-   📸 **Evidencia K:** el formulario lleno, antes de enviar.
-   📸 **Evidencia L (entregable obligatorio):** el mensaje verde "¡Mensaje guardado con éxito en la Base de Datos!".
+| Sección | URL |
+|---|---|
+| Inicio | http://localhost:8080/inicio |
+| Servicios | http://localhost:8080/servicios |
+| Mis gustos personales | http://localhost:8080/gustos |
+| Contacto (guarda nombre, correo y comentario en MySQL) | http://localhost:8080/contacto |
 
-7. **Comprobar la persistencia** → phpMyAdmin → `db_proyecto_mvc` → `contactos` → **Examinar**
-   📸 **Evidencia M (entregable obligatorio):** la fila con el correo y el comentario que escribiste en la web.
-   📸 **Evidencia N (opcional, suma puntos):** ejecuta `docker compose down` y luego `docker compose up` otra vez; vuelve a abrir la tabla y toma captura mostrando que el registro sigue ahí. Esto demuestra que el volumen `datos-persistentes` conserva los datos aunque se destruyan los contenedores.
+## Comandos útiles
 
-8. **Subir a GitHub**
-   📸 **Evidencia O:** la página del repositorio en GitHub con los archivos.
+| Acción | Comando |
+|---|---|
+| Iniciar en segundo plano | `docker compose up --build -d` |
+| Ver los contenedores activos | `docker ps` |
+| Aplicar cambios en el código (reconstruye solo la app) | `docker compose up --build -d web-app` |
+| Detener y eliminar los contenedores (conserva los datos) | `docker compose down` |
+| Eliminar también los datos de MySQL | `docker compose down -v` |
 
-Para apagar todo: `Ctrl + C` y luego `docker compose down` (agrega `-v` solo si quieres borrar también los datos de MySQL).
+Como el `Dockerfile` copia el código dentro de la imagen (`COPY . /var/www/html/`), los cambios en archivos PHP o CSS se ven solo después de reconstruir la imagen de `web-app`.
 
-## Cambios realizados
+## Estructura del proyecto
+
+```
+lift-and-shift-mvc/
+├── index.php                  Punto de entrada (front controller)
+├── .htaccess                  Redirige todas las URL a index.php
+├── conexion.php               Conexión PDO a MySQL (host db-mysql)
+├── controllers/
+│   └── SiteController.php     Enrutamiento y validación del formulario
+├── models/
+│   └── ContactoModel.php      Inserta los contactos en la base de datos
+├── views/                     Encabezado, pie y una vista por sección
+├── assets/css/estilos.css     Estilos del sitio
+├── sql/contactos.sql          Creación y modificación de la tabla contactos
+├── Dockerfile                 Imagen de la aplicación (PHP 8.2 + Apache)
+├── docker-compose.yml         Orquestación de los tres servicios
+└── .dockerignore              Archivos excluidos de la imagen
+```
+
+## Cambios respecto a la aplicación original
 
 | Archivo | Cambio |
 |---|---|
@@ -65,11 +100,11 @@ Para apagar todo: `Ctrl + C` y luego `docker compose down` (agrega `-v` solo si 
 | `controllers/SiteController.php` | Validación de campos vacíos y formato de correo; ruta `gustos` |
 | `views/contacto.php` | Formulario con correo (`type="email"`) y comentario (`textarea`) |
 | `views/gustos.php` | Nueva sección "Mis gustos personales" |
-| `views/header.php`, `views/footer.php`, `assets/css/estilos.css` | Nuevo diseño completo (paleta lavanda, ciruela y violeta) |
+| `views/header.php`, `views/footer.php`, `assets/css/estilos.css` | Nuevo diseño (paleta lavanda, ciruela y violeta) |
 
-## Si algo falla
+## Solución de problemas
 
-- **"Error de conexión" al abrir el 8080:** MySQL aún está iniciando; espera unos segundos y recarga.
-- **Puerto 3306, 8080 u 8085 ocupado:** cierra WAMP/XAMPP o cualquier MySQL local antes de `docker compose up`.
-- **Aviso "the attribute `version` is obsolete":** es solo una advertencia de Docker Compose moderno; se dejó la línea porque la guía la pide.
-- **Cambié CSS o vistas y no se ven:** como el código se copia dentro de la imagen, hay que reconstruir con `docker compose up --build`.
+- **"Error de conexión" al abrir el puerto 8080:** MySQL todavía está iniciando; espera unos segundos y recarga.
+- **"port is already allocated":** otro programa usa el puerto 8080, 8085 o 3306; cierra WAMP, XAMPP o el MySQL local.
+- **Aviso "the attribute `version` is obsolete":** es solo una advertencia de las versiones nuevas de Docker Compose; no afecta el funcionamiento.
+- **No veo un cambio de CSS:** reconstruye `web-app` y recarga el navegador con `Ctrl + F5`.

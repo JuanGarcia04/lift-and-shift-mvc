@@ -2,14 +2,17 @@
 // controllers/SiteController.php
 require_once 'models/ContactoModel.php';
 
-class SiteController {
+class SiteController
+{
     private $conexion;
 
-    public function __construct($conexion) {
+    public function __construct($conexion)
+    {
         $this->conexion = $conexion;
     }
 
-    public function manejarPeticion() {
+    public function manejarPeticion()
+    {
         // Capturar sección actual
         $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : 'inicio';
         $mensaje_db = "";
@@ -27,11 +30,11 @@ class SiteController {
             } else {
                 $modelo = new ContactoModel($this->conexion);
                 $exito = $modelo->guardarContacto($nombre, $correo, $comentario);
-
+                
                 if ($exito) {
-                    $mensaje_db = "<p class='alerta alerta-ok'>¡Mensaje guardado con éxito en la Base de Datos!</p>";
+                    $mensaje_db = "<p class='alerta alerta-ok'>¡Tu información se ha guardado correctamente!</p>";
                 } else {
-                    $mensaje_db = "<p class='alerta alerta-error'>Error al guardar en la base de datos.</p>";
+                    $mensaje_db = "<p class='alerta alerta-error'>No fue posible guardar tu información. Por favor, inténtalo nuevamente.</p>";
                 }
             }
         }
